@@ -101,6 +101,33 @@ def fallback_parser(user_query):
                     "event_id": None,
                     "explanation": f"Querying events for date {date_str}."
                 }
+            
+            # Check short formats like M/D, D/M, M-D, D-M (e.g. 8/28, 8-28, 28/8)
+            short_match = re.search(r"\b(\d{1,2})[-/](\d{1,2})\b", user_query)
+            if short_match:
+                val1 = int(short_match.group(1))
+                val2 = int(short_match.group(2))
+                
+                # Default assume Month/Day unless val1 is > 12 (then val1 is Day)
+                if val1 > 12 and val2 <= 12:
+                    day, month = val1, val2
+                elif val2 > 12 and val1 <= 12:
+                    day, month = val2, val1
+                else:
+                    # Ambiguous, default to Month/Day as user requested 8/28 -> August 28
+                    month, day = val1, val2
+                
+                if 1 <= month <= 12 and 1 <= day <= 31:
+                    # August-December -> 2026, January-July -> 2027
+                    year = 2026 if month >= 8 else 2027
+                    resolved_date = f"{year}-{month:02d}-{day:02d}"
+                    return {
+                        "action": "query",
+                        "query_date": resolved_date,
+                        "event_details": None,
+                        "event_id": None,
+                        "explanation": f"Querying events for date {resolved_date}."
+                    }
 
     if target_date:
         return {

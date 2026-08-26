@@ -148,10 +148,10 @@ def parse_and_execute(user_input):
         else:
             return f"Error: Event with ID {event_id} not found."
             
-    # Match specific YYYY-MM-DD dates in the query
+    # Match specific dates in the query
     else:
-        # Check if there is a substring matching YYYY-MM-DD
         import re
+        # Check if there is a substring matching YYYY-MM-DD
         date_match = re.search(r"\b\d{4}-\d{2}-\d{2}\b", user_input)
         if date_match:
             date_str = date_match.group(0)
@@ -160,8 +160,32 @@ def parse_and_execute(user_input):
                 return format_events(events, date_str)
             except Exception as e:
                 return f"Error reading date {date_str}: {str(e)}"
-        else:
-            return "Command not recognized. Type 'help' to see available options."
+                
+        # Check short formats like M/D, D/M, M-D, D-M (e.g. 8/28, 8-28, 28/8)
+        short_match = re.search(r"\b(\d{1,2})[-/](\d{1,2})\b", user_input)
+        if short_match:
+            val1 = int(short_match.group(1))
+            val2 = int(short_match.group(2))
+            
+            # Default assume Month/Day unless val1 is > 12 (then val1 is Day)
+            if val1 > 12 and val2 <= 12:
+                day, month = val1, val2
+            elif val2 > 12 and val1 <= 12:
+                day, month = val2, val1
+            else:
+                month, day = val1, val2
+                
+            if 1 <= month <= 12 and 1 <= day <= 31:
+                # August-December -> 2026, January-July -> 2027
+                year = 2026 if month >= 8 else 2027
+                resolved_date = f"{year}-{month:02d}-{day:02d}"
+                try:
+                    events = database.get_events_by_date(resolved_date)
+                    return format_events(events, resolved_date)
+                except Exception as e:
+                    return f"Error reading date {resolved_date}: {str(e)}"
+                    
+        return "Command not recognized. Type 'help' to see available options."
 
 def main():
     print("====================================================")
