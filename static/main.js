@@ -431,7 +431,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const now = new Date();
-        const notifiedIds = JSON.parse(localStorage.getItem('notified_events') || '[]');
+        const notifiedDayBefore = JSON.parse(localStorage.getItem('notified_day_before') || '[]');
+        const notified2h = JSON.parse(localStorage.getItem('notified_2h') || '[]');
+        const notified15m = JSON.parse(localStorage.getItem('notified_events') || '[]');
+
+        let updatedDayBefore = false;
+        let updated2h = false;
+        let updated15m = false;
 
         events.forEach(ev => {
             try {
@@ -453,44 +459,73 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const eventDate = new Date(year, month, day, hours, minutes, 0);
 
-                // Check difference in minutes
+                // Check difference in milliseconds, hours, and minutes
                 const diffMs = eventDate - now;
+                const diffHours = diffMs / 1000 / 60 / 60;
                 const diffMin = diffMs / 1000 / 60;
 
-                // Notify if event starts in next 15 minutes AND in future AND not already notified
-                if (diffMin > 0 && diffMin <= 15 && !notifiedIds.includes(ev.id)) {
-                    const roomInfo = ev.description ? ev.description.split('|')[1] || ev.description : '';
-                    
-                    const notificationTitle = `Schemapåminnelse: ${ev.title}`;
+                const roomInfo = ev.description ? ev.description.split('|')[1] || ev.description : '';
+
+                // Helper to send a notification
+                const triggerNotification = (title, body) => {
                     const notificationOptions = {
-                        body: `Börjar kl. ${ev.event_time}\n${roomInfo}`,
+                        body: body,
                         icon: '/static/icon.svg',
                         badge: '/static/icon.svg',
                         vibrate: [200, 100, 200]
                     };
 
-                    // Send notification via Service Worker
                     if (navigator.serviceWorker.controller) {
                         navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification(notificationTitle, notificationOptions);
+                            reg.showNotification(title, notificationOptions);
                         });
                     } else {
-                        new Notification(notificationTitle, notificationOptions);
+                        new Notification(title, notificationOptions);
                     }
 
-                    // Speak reminder if TTS is enabled
                     if (isTtsEnabled) {
-                        speak(`Påminnelse: ${ev.title} börjar klockan ${ev.event_time}.`);
+                        speak(body);
                     }
+                };
 
-                    // Save to localStorage to prevent double notifications
-                    notifiedIds.push(ev.id);
-                    localStorage.setItem('notified_events', JSON.stringify(notifiedIds));
+                // INTERVAL 1: Day Before (starts in 12 to 24 hours AND not already notified)
+                if (diffHours > 12 && diffHours <= 24 && !notifiedDayBefore.includes(ev.id)) {
+                    triggerNotification(
+                        `Imorgon: ${ev.title}`,
+                        `Lektionen "${ev.title}" börjar imorgon kl. ${ev.event_time}. ${roomInfo}`
+                    );
+                    notifiedDayBefore.push(ev.id);
+                    updatedDayBefore = true;
+                }
+
+                // INTERVAL 2: 2 Hours Before (starts in 1.75 to 2 hours AND not already notified)
+                if (diffHours > 1.75 && diffHours <= 2.0 && !notified2h.includes(ev.id)) {
+                    triggerNotification(
+                        `Snart lektion: ${ev.title}`,
+                        `Din lektion "${ev.title}" börjar om två timmar (kl. ${ev.event_time}). ${roomInfo}`
+                    );
+                    notified2h.push(ev.id);
+                    updated2h = true;
+                }
+
+                // INTERVAL 3: 15 Minutes Before (starts in 0 to 15 minutes AND not already notified)
+                if (diffMin > 0 && diffMin <= 15 && !notified15m.includes(ev.id)) {
+                    triggerNotification(
+                        `Lektion börjar strax: ${ev.title}`,
+                        `Lektionen "${ev.title}" börjar om 15 minuter (kl. ${ev.event_time}). ${roomInfo}`
+                    );
+                    notified15m.push(ev.id);
+                    updated15m = true;
                 }
             } catch (e) {
                 console.error('Error scheduling notification for event:', ev, e);
             }
         });
+
+        // Save updated trackers back to localStorage
+        if (updatedDayBefore) localStorage.setItem('notified_day_before', JSON.stringify(notifiedDayBefore));
+        if (updated2h) localStorage.setItem('notified_2h', JSON.stringify(notified2h));
+        if (updated15m) localStorage.setItem('notified_events', JSON.stringify(notified15m));
     }
 
     // 4. Set interval to poll upcoming schedule every 60 seconds
