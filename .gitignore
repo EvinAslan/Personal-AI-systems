@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+token.json
+extracted_raw.txt
+verify_app.py
+*.bat

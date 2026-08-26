@@ -1,0 +1,18 @@
+{
+  "name": "Calendar Assistant",
+  "short_name": "Calendar Assistant",
+  "description": "A premium AI Calendar Assistant with voice control and schedule notifications.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0A13",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
