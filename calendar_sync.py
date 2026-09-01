@@ -1,21 +1,5 @@
 #!/usr/bin/env python3
-"""
-Step 8: Google Calendar Sync
-This script demonstrates how to integrate with the Google Calendar API.
-It includes instructions and template code to authenticate using OAuth2, 
-fetch upcoming calendar events, and import them into our SQLite database.
 
-Prerequisites:
-    pip install google-auth-oauthlib google-api-python-client
-
-Setup Google Cloud Console:
-1. Go to https://console.cloud.google.com
-2. Create a new project.
-3. Enable the 'Google Calendar API'.
-4. Configure the OAuth Consent Screen and add yourself as a test user.
-5. Create OAuth Client ID credentials (Desktop app) and download 'credentials.json' 
-   into this directory.
-"""
 
 import os
 import datetime
@@ -26,8 +10,6 @@ import database
 try:
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
-    from google.oauth2.credentials import Credentials
-    from google.auth.transport.requests import Request
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
