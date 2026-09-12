@@ -93,8 +93,24 @@ def parse_and_execute(user_input):
             output.append(f"[{ev['id']}] {ev['event_date']} at {ev['event_time']} - {ev['title']}{desc_str}")
         return "\n".join(output)
         
+    # Week number query
+    elif any(k in lower_input for k in ["vecka", "week"]):
+        now = datetime.today()
+        week_num = now.isocalendar()[1]
+        swedish_weekdays = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"]
+        weekday = swedish_weekdays[now.weekday()].capitalize()
+        return f"Det är vecka {week_num} idag ({weekday} {now.strftime('%Y-%m-%d')})."
+
+    # Date query
+    elif any(k in lower_input for k in ["datum", "vilken dag"]):
+        now = datetime.today()
+        week_num = now.isocalendar()[1]
+        swedish_weekdays = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"]
+        weekday = swedish_weekdays[now.weekday()].capitalize()
+        return f"Dagens datum är {weekday} {now.strftime('%Y-%m-%d')} (vecka {week_num})."
+
     # Today command
-    elif "today" in lower_input:
+    elif "today" in lower_input or "idag" in lower_input:
         today_str = datetime.today().strftime("%Y-%m-%d")
         events = database.get_events_by_date(today_str)
         return format_events(events, f"Today ({today_str})")

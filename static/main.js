@@ -56,10 +56,86 @@ document.addEventListener("DOMContentLoaded", () => {
         geminiKeyInput.value = savedKey;
     }
 
+    // Toggle Quick Add Event Form
+    const toggleAddBtn = document.getElementById("toggle-add-btn");
+    const quickAddWrapper = document.getElementById("quick-add-wrapper");
+
+    function setQuickAddState(isOpen) {
+        if (!quickAddWrapper || !toggleAddBtn) return;
+        
+        if (isOpen) {
+            quickAddWrapper.classList.remove("collapsed");
+            toggleAddBtn.classList.add("active");
+            toggleAddBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> <span>Stäng</span>';
+            
+            const dateInput = document.getElementById("event-date");
+            if (dateInput && !dateInput.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+            const timeInput = document.getElementById("event-time");
+            if (timeInput && !timeInput.value) {
+                timeInput.value = "12:00";
+            }
+            
+            // Keep scroll position at very top so Rubrik is 100% visible
+            quickAddWrapper.scrollTop = 0;
+            const parentPanel = quickAddWrapper.closest(".panel-section");
+            if (parentPanel) parentPanel.scrollTop = 0;
+            
+            setTimeout(() => {
+                const titleInput = document.getElementById("event-title");
+                if (titleInput) {
+                    titleInput.focus({ preventScroll: true });
+                }
+            }, 80);
+        } else {
+            quickAddWrapper.classList.add("collapsed");
+            toggleAddBtn.classList.remove("active");
+            toggleAddBtn.innerHTML = '<i class="fa-solid fa-plus"></i> <span>Ny tid</span>';
+        }
+    }
+
+    if (toggleAddBtn && quickAddWrapper) {
+        toggleAddBtn.addEventListener("click", () => {
+            const isCurrentlyCollapsed = quickAddWrapper.classList.contains("collapsed");
+            setQuickAddState(isCurrentlyCollapsed);
+        });
+    }
+
+    // Toggle Settings Panel at bottom
+    const toggleSettingsBtn = document.getElementById("toggle-settings-btn");
+    const settingsPanelContent = document.getElementById("settings-panel-content");
+    const apiStatusBadge = document.getElementById("api-status-badge");
+
+    function updateApiStatusBadge() {
+        const key = (localStorage.getItem("gemini_api_key") || "").trim();
+        if (apiStatusBadge) {
+            if (key) {
+                apiStatusBadge.className = "api-status-badge";
+                apiStatusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Aktiv';
+            } else {
+                apiStatusBadge.className = "api-status-badge inactive";
+                apiStatusBadge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Ingen nyckel';
+            }
+        }
+    }
+    updateApiStatusBadge();
+
+    if (toggleSettingsBtn && settingsPanelContent) {
+        toggleSettingsBtn.addEventListener("click", () => {
+            settingsPanelContent.classList.toggle("collapsed");
+        });
+    }
+
     // Save Gemini Key to LocalStorage
     saveKeyBtn.addEventListener("click", () => {
         const key = geminiKeyInput.value.trim();
         localStorage.setItem("gemini_api_key", key);
+        updateApiStatusBadge();
         
         // Visual feedback
         saveKeyBtn.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #10b981;"></i>';
@@ -85,7 +161,48 @@ document.addEventListener("DOMContentLoaded", () => {
     // Send Button Click
     sendBtn.addEventListener("click", sendMessage);
 
+    // Live Date & Week calculation and display
+    function getISOWeek(d) {
+        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function updateLiveDateAndWeek() {
+        const now = new Date();
+        const weekNumber = getISOWeek(now);
+
+        const swedishWeekdays = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"];
+        const swedishMonths = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
+        const swedishMonthsShort = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
+
+        const weekdayName = swedishWeekdays[now.getDay()];
+        const dayOfMonth = now.getDate();
+        const monthName = swedishMonths[now.getMonth()];
+        const monthShort = swedishMonthsShort[now.getMonth()];
+        const year = now.getFullYear();
+
+        // 1. Sidebar Today Widget
+        const sidebarWeekdayEl = document.getElementById("sidebar-weekday");
+        const sidebarDateEl = document.getElementById("sidebar-date");
+        const sidebarWeekEl = document.getElementById("sidebar-week");
+
+        if (sidebarWeekdayEl) sidebarWeekdayEl.textContent = weekdayName;
+        if (sidebarDateEl) sidebarDateEl.textContent = `${dayOfMonth} ${monthName} ${year}`;
+        if (sidebarWeekEl) sidebarWeekEl.textContent = weekNumber;
+
+        // 2. Chat Header Date Badge
+        const headerDateValEl = document.getElementById("header-date-val");
+        const headerCurrentWeekEl = document.getElementById("header-current-week");
+
+        if (headerDateValEl) headerDateValEl.textContent = `${weekdayName} ${dayOfMonth} ${monthShort}`;
+        if (headerCurrentWeekEl) headerCurrentWeekEl.textContent = `Vecka ${weekNumber}`;
+    }
+
     // Initial Load
+    updateLiveDateAndWeek();
+    setInterval(updateLiveDateAndWeek, 60000);
     fetchUpcomingEvents();
 
     // Help Dialog Tooltip
@@ -132,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Render event cards in the sidebar
     function renderEvents(events) {
         if (events.length === 0) {
-            eventsListContainer.innerHTML = '<div class="events-loading">No events scheduled.</div>';
+            eventsListContainer.innerHTML = '<div class="events-loading">Inga inplanerade tider än.<br><span style="font-size: 0.8rem; color: var(--text-muted);">Klicka på <strong>+ Ny tid</strong> ovan eller boka via chatten!</span></div>';
             return;
         }
 
@@ -148,12 +265,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="event-card-left">
                     <span class="event-card-title">${ev.title}</span>
                     <div class="event-card-datetime">
-                        <span><i class="fa-regular fa-calendar"></i> ${ev.event_date}</span>
-                        <span><i class="fa-regular fa-clock"></i> ${ev.event_time}</span>
+                        <span class="date-pill"><i class="fa-regular fa-calendar"></i> ${ev.event_date}</span>
+                        <span class="time-pill"><i class="fa-regular fa-clock"></i> ${ev.event_time}</span>
                     </div>
                     ${descHtml}
                 </div>
-                <button class="delete-event-btn" data-id="${ev.id}" title="Delete event">
+                <button class="delete-event-btn" data-id="${ev.id}" title="Ta bort tid">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             `;
@@ -161,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Delete action
             card.querySelector(".delete-event-btn").addEventListener("click", async (e) => {
                 const eventId = e.currentTarget.getAttribute("data-id");
-                if (confirm(`Are you sure you want to delete event #${eventId}?`)) {
+                if (confirm(`Vill du ta bort "${ev.title}"?`)) {
                     await deleteEventDirect(eventId);
                 }
             });
@@ -177,9 +294,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
             if (data.success) {
                 fetchUpcomingEvents();
-                addMessage("assistant", `I've deleted event #${id}.`);
+                addMessage("assistant", `Händelsen har tagits bort.`);
             } else {
-                alert("Failed to delete event.");
+                alert("Kunde inte ta bort händelsen.");
             }
         } catch (err) {
             console.error("Error deleting event:", err);
@@ -210,10 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
             if (data.success) {
                 quickAddForm.reset();
+                setQuickAddState(false);
                 fetchUpcomingEvents();
-                addMessage("assistant", `Event scheduled successfully: <strong>${title}</strong> on ${date} at ${time}.`);
+                addMessage("assistant", `Tid inbokad: <strong>${title}</strong> den ${date} kl. ${time}.`);
             } else {
-                alert("Failed to schedule: " + data.error);
+                alert("Kunde inte boka: " + data.error);
             }
         } catch (err) {
             console.error("Error scheduling event:", err);

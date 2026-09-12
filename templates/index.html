@@ -15,9 +15,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Main Style Sheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Main Style Sheet with cache-busting -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=5">
 </head>
 <body>
     <div class="app-container">
@@ -34,35 +34,83 @@
                 </button>
             </div>
             
-            <!-- Gemini Settings Panel -->
-            <div class="panel-section">
-                <h3 class="section-title"><i class="fa-solid fa-key"></i> Gemini API Key</h3>
-                <div class="api-key-container">
-                    <input type="password" id="gemini-key-input" placeholder="Enter GEMINI_API_KEY..." />
-                    <button id="save-key-btn" title="Save API Key"><i class="fa-solid fa-check"></i></button>
+            <!-- Today Date & Week Card -->
+            <div class="today-widget" id="today-widget">
+                <div class="today-widget-info">
+                    <span class="today-weekday" id="sidebar-weekday">--</span>
+                    <span class="today-full-date" id="sidebar-date">--</span>
                 </div>
-                <p class="section-note">Defaults to server's <code>GEMINI_API_KEY</code> if left blank.</p>
+                <div class="today-week-pill">
+                    <span class="week-label">VECKA</span>
+                    <span class="week-number" id="sidebar-week">--</span>
+                </div>
             </div>
             
-            <!-- Quick Add Event Form -->
-            <div class="panel-section">
-                <h3 class="section-title"><i class="fa-solid fa-calendar-plus"></i> Quick Schedule</h3>
-                <form id="quick-add-form" class="quick-form">
-                    <input type="text" id="event-title" placeholder="Event title (e.g., Gym)" required />
-                    <div class="form-row">
-                        <input type="date" id="event-date" required />
-                        <input type="text" id="event-time" placeholder="10:00 AM" required />
-                    </div>
-                    <input type="text" id="event-desc" placeholder="Short description (optional)" />
-                    <button type="submit" class="submit-btn">Schedule Event</button>
-                </form>
-            </div>
-            
-            <!-- Scheduled Events Display -->
+            <!-- Scheduled Events Display (Now primary focus of the sidebar) -->
             <div class="panel-section flex-grow">
-                <h3 class="section-title"><i class="fa-solid fa-list-ul"></i> Upcoming Schedule</h3>
+                <div class="section-header-row">
+                    <h3 class="section-title"><i class="fa-solid fa-calendar-check"></i> Mina tider</h3>
+                    <button type="button" id="toggle-add-btn" class="add-event-toggle-btn" title="Lägg till ny tid">
+                        <i class="fa-solid fa-plus"></i> <span>Ny tid</span>
+                    </button>
+                </div>
+                
+                <!-- Collapsible Quick Add Event Form -->
+                <div class="quick-add-collapse collapsed" id="quick-add-wrapper">
+                    <form id="quick-add-form" class="quick-form" autocomplete="off">
+                        <div class="form-group">
+                            <label for="event-title" class="form-label">
+                                <i class="fa-solid fa-pen"></i> Rubrik <span class="required-star">*</span>
+                            </label>
+                            <input type="text" id="event-title" placeholder="t.ex. Tandläkare, Träning..." required />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="event-date" class="form-label">
+                                    <i class="fa-regular fa-calendar"></i> Datum <span class="required-star">*</span>
+                                </label>
+                                <input type="date" id="event-date" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="event-time" class="form-label">
+                                    <i class="fa-regular fa-clock"></i> Tid <span class="required-star">*</span>
+                                </label>
+                                <input type="time" id="event-time" value="12:00" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="event-desc" class="form-label">
+                                <i class="fa-solid fa-location-dot"></i> Plats / Anteckning <span class="optional-tag">(valfritt)</span>
+                            </label>
+                            <input type="text" id="event-desc" placeholder="t.ex. Folktandvården, Sal 2" />
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="save-event-btn">
+                            <i class="fa-solid fa-check"></i> Spara tid
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Events List Container with plenty of vertical space -->
                 <div class="events-list" id="events-list-container">
-                    <div class="events-loading">Loading schedule...</div>
+                    <div class="events-loading">Laddar tider...</div>
+                </div>
+            </div>
+
+            <!-- Compact Collapsible Gemini Settings at bottom -->
+            <div class="settings-drawer">
+                <button type="button" id="toggle-settings-btn" class="settings-toggle-btn">
+                    <span class="settings-title"><i class="fa-solid fa-gear"></i> AI-inställningar</span>
+                    <span class="api-status-badge" id="api-status-badge"><i class="fa-solid fa-circle-check"></i> Aktiv</span>
+                </button>
+                <div class="settings-panel-content collapsed" id="settings-panel-content">
+                    <div class="api-key-container">
+                        <input type="password" id="gemini-key-input" placeholder="Klistra in GEMINI_API_KEY..." />
+                        <button id="save-key-btn" title="Spara nyckel"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                    <p class="section-note">Använder Google Gemini 3.6 Flash</p>
                 </div>
             </div>
         </aside>
@@ -79,6 +127,15 @@
                     <span class="status-text">Ready to help</span>
                 </div>
                 
+                <!-- Header Live Date & Week -->
+                <div class="header-date-badge" id="header-date-badge">
+                    <span class="header-date-text">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="header-date-val">--</span>
+                    </span>
+                    <span class="header-week-tag" id="header-current-week">V. --</span>
+                </div>
+
                 <!-- Voice Controls -->
                 <div class="voice-controls">
                     <button id="tts-toggle-btn" class="control-btn active" title="Toggle Text-to-Speech (Read Aloud)">
@@ -129,6 +186,6 @@
     </div>
 
     <!-- Main JavaScript Logic -->
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script src="{{ url_for('static', filename='main.js') }}?v=5"></script>
 </body>
 </html>

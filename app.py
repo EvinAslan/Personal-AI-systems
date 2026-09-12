@@ -58,18 +58,19 @@ def chat():
             if date_str:
                 db_events = database.get_events_by_date(date_str)
                 current_date_focus = date_str
-                # Build an AI response detailing events
+                # Build response detailing events
                 if db_events:
                     event_list = []
                     for ev in db_events:
                         desc = f" ({ev['description']})" if ev['description'] else ""
                         event_list.append(f"• {ev['event_time']}: {ev['title']}{desc}")
                     events_formatted = "\n".join(event_list)
-                    response_text = f"Here is your schedule for {date_str}:\n{events_formatted}"
+                    prefix = explanation if explanation else f"Här är ditt schema för {date_str}:"
+                    response_text = f"{prefix}\n\n{events_formatted}"
                 else:
-                    response_text = f"You don't have any events scheduled for {date_str}."
+                    response_text = f"Du har inga inplanerade lektioner för {date_str}."
             else:
-                response_text = "I understood you wanted to see events, but I couldn't identify the date."
+                response_text = "Jag förstod att du ville se schema, men kunde inte identifiera datumet."
                 
         elif action == "list_all":
             db_events = database.get_all_events()
@@ -77,11 +78,12 @@ def chat():
                 event_list = []
                 for ev in db_events:
                     desc = f" ({ev['description']})" if ev['description'] else ""
-                    event_list.append(f"• {ev['event_date']} at {ev['event_time']}: {ev['title']}{desc}")
+                    event_list.append(f"• {ev['event_date']} kl. {ev['event_time']}: {ev['title']}{desc}")
                 events_formatted = "\n".join(event_list)
-                response_text = f"Here are all scheduled events:\n{events_formatted}"
+                prefix = explanation if explanation else "Här är dina inplanerade tider:"
+                response_text = f"{prefix}\n\n{events_formatted}"
             else:
-                response_text = "Your calendar is currently empty."
+                response_text = "Ditt schema är tomt."
                 
         elif action == "add":
             details = analysis.get("event_details") or {}

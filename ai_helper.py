@@ -62,6 +62,30 @@ def fallback_parser(user_query):
             "explanation": f"Deleting event with ID {event_id} via keyword matching."
         }
         
+    # Check for Date/Week Info queries
+    swedish_weekdays = ["måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag", "söndag"]
+    swedish_months = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"]
+    current_weekday_name = swedish_weekdays[today.weekday()].capitalize()
+    current_month_name = swedish_months[today.month - 1]
+    current_week = today.isocalendar()[1]
+
+    if any(k in lower_query for k in ["vilken vecka", "vad är det för vecka", "vecka är det", "vilken vecka är vi", "what week"]):
+        return {
+            "action": "unknown",
+            "query_date": None,
+            "event_details": None,
+            "event_id": None,
+            "explanation": f"Det är **vecka {current_week}** idag ({current_weekday_name} {today.day} {current_month_name} {today.year})."
+        }
+    if any(k in lower_query for k in ["vilket datum", "vad är det för datum", "dagens datum", "vad är datumet", "vilken dag är det", "what is today's date", "what date is it"]):
+        return {
+            "action": "unknown",
+            "query_date": None,
+            "event_details": None,
+            "event_id": None,
+            "explanation": f"Idag är det **{current_weekday_name} den {today.day} {current_month_name} {today.year}** (vecka {current_week})."
+        }
+        
     # 3. Check for Query dates
     # Resolve relative dates
     target_date = None
@@ -172,17 +196,15 @@ def analyze_query(user_query, api_key=None):
         # Configure Gemini
         genai.configure(api_key=key)
         
-        # We can use gemini-1.5-flash or gemini-2.5-flash
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
         # Provide current context: date and weekday
         today = datetime.today()
         today_str = today.strftime("%Y-%m-%d")
         weekday_str = today.strftime("%A")
+        week_num = today.isocalendar()[1]
         
         system_prompt = f"""
 You are the natural language parsing core of a Personal Calendar Assistant.
-Today's date is {today_str} ({weekday_str}).
+Today's date is {today_str} ({weekday_str}), Week {week_num}.
 
 Your task is to analyze the user's sentence and return a JSON object ONLY. Do not include any markdown styling, code blocks, or extra text. Just raw valid JSON.
 
@@ -205,19 +227,42 @@ Guidelines for resolving dates:
 - "tomorrow" -> {(today + timedelta(days=1)).strftime("%Y-%m-%d")}
 - "day after tomorrow" -> {(today + timedelta(days=2)).strftime("%Y-%m-%d")}
 - Next [Weekday] (e.g. "next Friday"): Calculate relative to today.
-- If the user is listing/viewing events, set action to "query" and set query_date.
-- If the user wants to see everything or has a general request to list calendar, set action to "list_all".
+- If the user asks about next week or listing all/upcoming events, set action to "list_all".
+- If the user is listing/viewing events for a specific date or day, set action to "query" and set query_date.
 - If the user wants to add an event (e.g. "schedule a meeting tomorrow at 3 PM called Project Sync"), set action to "add", extract the details, and make sure date is resolved.
 - If the user wants to delete (e.g. "delete event 4" or "remove appointment 1"), set action to "delete" and extract the numeric event_id.
+- If the user asks what day, date, or week it is (e.g. "vilken vecka är det", "vad är det för datum"), set action to "unknown" and answer the question politely in Swedish in the "explanation" field (mention the week number and Swedish date).
 
 User Query: "{user_query}"
 JSON Output:
 """
         
-        response = model.generate_content(
-            system_prompt,
-            generation_config={"response_mime_type": "application/json"}
-        )
+        # Try current models in order of availability
+        candidate_models = [
+            "gemini-3.6-flash",
+            "gemini-3.8-flash",
+            "gemini-flash-latest",
+            "gemini-2.5-flash",
+            "gemini-1.5-flash"
+        ]
+        
+        response = None
+        last_err = None
+        for model_name in candidate_models:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    system_prompt,
+                    generation_config={"response_mime_type": "application/json"}
+                )
+                if response and response.text:
+                    break
+            except Exception as err:
+                last_err = err
+                continue
+
+        if not response or not response.text:
+            raise last_err or Exception("All Gemini models failed.")
         
         # Parse the JSON response
         parsed_response = json.loads(response.text.strip())
