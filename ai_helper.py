@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Step 6: Natural Language AI Helper
-This module interfaces with the Google Gemini API to parse natural language queries
-and map them into structured actions (query, add, delete) with dates, times, and titles.
-If the API key is missing or the package is not installed, it falls back to keyword parsing.
-"""
+"""Turn calendar requests into actions using Gemini or local keyword parsing."""
 
 import os
 import json
@@ -203,7 +198,7 @@ def analyze_query(user_query, api_key=None):
         week_num = today.isocalendar()[1]
         
         system_prompt = f"""
-You are the natural language parsing core of a Personal Calendar Assistant.
+You help manage events in Evina's Calendar.
 Today's date is {today_str} ({weekday_str}), Week {week_num}.
 
 Your task is to analyze the user's sentence and return a JSON object ONLY. Do not include any markdown styling, code blocks, or extra text. Just raw valid JSON.
@@ -276,7 +271,7 @@ JSON Output:
         return result
 
 if __name__ == "__main__":
-    print("=== STEP 6: NATURAL LANGUAGE AI HELPER TEST ===")
+    print("=== CALENDAR REQUEST PARSER TEST ===")
     
     # Test cases
     test_queries = [

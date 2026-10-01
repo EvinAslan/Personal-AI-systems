@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aether-calendar-v1';
+const CACHE_NAME = 'evinas-calendar-v1';
 const ASSETS = [
   '/',
   '/static/style.css',

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-
+"""Import upcoming events from Google Calendar into the local database."""
 
 import os
-import datetime
-import sqlite3
+from datetime import datetime
 import database
+from date_utils import parse_event_date
 
 # Try importing Google API client libraries
 try:
@@ -76,7 +76,7 @@ def sync_events(max_results=10):
         
     try:
         # Get local ISO format string for current time
-        now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
+        now = datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
         print("Fetching upcoming events from Google Calendar...")
         
         events_result = service.events().list(
@@ -109,29 +109,16 @@ def sync_events(max_results=10):
             # Parse start time
             # Format expected by SQLite: YYYY-MM-DD and HH:MM AM/PM
             if "T" in start:
-                # E.g. '2026-08-27T10:00:00+02:00' or '2026-08-27T10:00:00Z'
-                # Clean timezone offset for simpler parsing
-                clean_time = start.split("+")[0].split("-")
-                # If there are negative values in timezone e.g. -05:00
-                if len(clean_time) > 3: 
-                    date_part = "-".join(clean_time[:3])
-                    time_part = clean_time[3].split("Z")[0]
-                else:
-                    date_part = start.split("T")[0]
-                    time_part = start.split("T")[1].split("Z")[0]
-                
-                # Parse to check validity
                 try:
-                    dt = datetime.datetime.strptime(f"{date_part} {time_part[:5]}", "%Y-%m-%d %H:%M")
-                    date_str = dt.strftime("%Y-%m-%d")
-                    time_str = dt.strftime("%I:%M %p") # e.g. '10:00 AM'
-                except Exception:
-                    # Fallback to defaults
-                    date_str = start.split("T")[0]
+                    dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+                    date_str = parse_event_date(start)
+                    time_str = dt.strftime("%I:%M %p")
+                except ValueError:
+                    date_str = parse_event_date(start.split("T")[0])
                     time_str = "12:00 PM"
             else:
                 # All day event (just date, e.g. '2026-08-27')
-                date_str = start
+                date_str = parse_event_date(start)
                 time_str = "09:00 AM" # default start time for all-day events
                 
             # Check if this event already exists to prevent duplicate syncs
@@ -155,7 +142,7 @@ def sync_events(max_results=10):
         print(f"[!] An API error occurred: {error}")
 
 if __name__ == "__main__":
-    print("=== STEP 8: GOOGLE CALENDAR SYNC MOCK/RUN ===")
+    print("=== GOOGLE CALENDAR SYNC ===")
     
     if not HAS_GOOGLE_CALENDAR_SDK:
         print("\n[Google Calendar SDK not installed]")

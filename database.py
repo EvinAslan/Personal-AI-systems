@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""
-Step 2 & 3: Create and Connect a Simple Database
-This module manages the SQLite database using Python's built-in sqlite3 library.
-It defines the database schema, seeds sample data, and provides functions 
-to insert and query events.
-"""
+"""Store and retrieve calendar events in the local SQLite database."""
 
 import sqlite3
 import os
 from datetime import datetime, timedelta
+from date_utils import parse_event_date
 
 DB_FILE = "events.db"
 
@@ -36,7 +32,6 @@ def init_db(force_recreate=False):
     if force_recreate:
         cursor.execute("DROP TABLE IF EXISTS events")
         
-    # Step 2: Design the events table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,13 +48,9 @@ def init_db(force_recreate=False):
 def add_event(title, date_str, time_str, description=None):
     """
     Inserts a new event into the database.
-    Demonstrates: Step 3 (INSERT query with parameterized values).
+    The date must use the YYYY-MM-DD format.
     """
-    # Simple validation of date format YYYY-MM-DD
-    try:
-        datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        raise ValueError(f"Invalid date format: {date_str}. Must be YYYY-MM-DD.")
+    date_str = parse_event_date(date_str)
         
     conn = get_connection()
     cursor = conn.cursor()
@@ -77,7 +68,7 @@ def add_event(title, date_str, time_str, description=None):
 def get_events_by_date(date_str):
     """
     Fetches all events scheduled for a specific date (YYYY-MM-DD).
-    Demonstrates: Step 3 (SELECT query with WHERE clause and parameters).
+    The date must use the YYYY-MM-DD format.
     """
     conn = get_connection()
     cursor = conn.cursor()
@@ -129,7 +120,7 @@ def seed_sample_data():
     print("Database seeded with sample events.")
 
 if __name__ == "__main__":
-    print("=== STEP 2 & 3: SQLITE DATABASE TUTORIAL ===")
+    print("=== CALENDAR DATABASE ===")
     
     # Initialize and seed data
     seed_sample_data()
@@ -147,4 +138,4 @@ if __name__ == "__main__":
     for ev in tomorrow_events:
         print(f"  - [{ev['event_time']}] {ev['title']} ({ev['description']})")
         
-    print("\n=== Database Tutorial Finished Successfully ===")
+    print("\n=== Database check finished ===")

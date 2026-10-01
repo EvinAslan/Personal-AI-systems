@@ -1,5 +1,5 @@
 /**
- * Main JS Controller for Aether Calendar Assistant
+ * Main JavaScript controller for Evina's Calendar
  * Features: Chat, API calls, event management, and Web Speech API (TTS & STT).
  */
 
@@ -207,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Help Dialog Tooltip
     helpInfoBtn.addEventListener("click", () => {
-        addMessage("assistant", "💡 <strong>Aether Quick Tips:</strong><br>" + 
+        addMessage("assistant", "💡 <strong>Quick tips:</strong><br>" +
                    "1. Enter your Gemini API key in the sidebar for full natural language intelligence.<br>" +
                    "2. Click the Microphone to speak instead of typing.<br>" +
                    "3. Turn on the Speaker icon to hear responses read aloud.<br>" +

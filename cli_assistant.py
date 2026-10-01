@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Step 4: Terminal-Based Assistant
-This command-line script interacts with the SQLite database.
-It parses rigid keywords (like 'today', 'tomorrow', weekdays, and date formats)
-to display and manage calendar events.
-"""
+"""Manage calendar events from an interactive terminal prompt."""
 
 import sys
 from datetime import datetime, timedelta
@@ -205,7 +200,7 @@ def parse_and_execute(user_input):
 
 def main():
     print("====================================================")
-    print("     Welcome to your Personal Calendar Assistant   ")
+    print("            Evina's Calendar                     ")
     print("====================================================")
     print("Type 'help' for a list of commands, or 'exit' to quit.")
     

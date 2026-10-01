@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
-"""
-Step 5 & 6: Flask Backend Web Application
-This script serves the web assistant dashboard, processes chat queries via NLP (Gemini/fallback),
-and exposes api endpoints for front-end visual components.
-"""
+"""Serve the calendar dashboard and its event and chat API endpoints."""
 
-import os
 from flask import Flask, render_template, request, jsonify
 import database
 import ai_helper
-from datetime import datetime
 
 # Initialize Flask app
 # We configure it to look for templates and static folders locally
@@ -42,7 +36,6 @@ def chat():
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
         
-    # Step 6: Process the user message through Gemini / Local Fallback
     analysis = ai_helper.analyze_query(user_message, api_key=api_key)
     action = analysis.get("action", "unknown")
     explanation = analysis.get("explanation", "")

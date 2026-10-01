@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
-"""
-Step 1: Learn Basic Python
-This script serves as a simple tutorial covering Python fundamentals 
-needed for building our personal calendar assistant.
-
-Key concepts covered:
-1. Variables & Data Types
-2. Control Flow (if/else, loops)
-3. Functions
-4. Built-in datetime module
-"""
+"""Demonstrate Python basics used by the calendar scripts."""
 
 from datetime import datetime, timedelta
 
 def main():
-    print("=== STEP 1: PYTHON BASICS TUTORIAL ===")
+    print("=== PYTHON BASICS ===")
 
     # 1. Variables & Data Types
     print("\n1. Variables & Data Types:")

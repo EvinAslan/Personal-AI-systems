@@ -1,7 +1,7 @@
 {
-  "name": "Calendar Assistant",
-  "short_name": "Calendar Assistant",
-  "description": "A premium AI Calendar Assistant with voice control and schedule notifications.",
+  "name": "Evina's Calendar",
+  "short_name": "My Calendar",
+  "description": "Evina's personal calendar and schedule.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0B0A13",
