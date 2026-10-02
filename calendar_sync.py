@@ -2,7 +2,7 @@
 """Import upcoming events from Google Calendar into the local database."""
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import database
 from date_utils import parse_event_date
 
@@ -76,7 +76,7 @@ def sync_events(max_results=10):
         
     try:
         # Get local ISO format string for current time
-        now = datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         print("Fetching upcoming events from Google Calendar...")
         
         events_result = service.events().list(

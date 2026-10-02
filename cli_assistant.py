@@ -200,7 +200,7 @@ def parse_and_execute(user_input):
 
 def main():
     print("====================================================")
-    print("            Evina's Calendar                     ")
+    print("            Evin's Calendar                     ")
     print("====================================================")
     print("Type 'help' for a list of commands, or 'exit' to quit.")
     

@@ -1,11 +1,11 @@
-const CACHE_NAME = 'evinas-calendar-v1';
+const CACHE_NAME = 'evin-calendar-v1';
 const ASSETS = [
   '/',
   '/static/style.css',
   '/static/main.js',
   '/static/icon.svg',
   '/static/manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap'
 ];
 

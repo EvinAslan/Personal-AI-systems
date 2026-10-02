@@ -1,7 +1,7 @@
 {
-  "name": "Evina's Calendar",
+  "name": "Evin's Calendar",
   "short_name": "My Calendar",
-  "description": "Evina's personal calendar and schedule.",
+  "description": "Evin's personal calendar and schedule.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0B0A13",

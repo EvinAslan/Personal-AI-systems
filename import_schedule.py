@@ -31,11 +31,6 @@ MOMENT_CLEANUP = {
     r"Tentame\s*n": "Tentamen"
 }
 
-def clean_text(text):
-    """Clean extra spaces and normalization issues in extracted text."""
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
-
 def parse_time_12h(time_str):
     """Convert HH:MM 24h format to HH:MM AM/PM format."""
     try:
@@ -53,9 +48,9 @@ def parse_pdf_schedule(pdf_path):
     # Regex to detect date headers in the PDF, e.g. "v 35 Tors 27/8" or "Tors 10/9"
     date_pattern = re.compile(r'(?:v\s+\d+\s+)?(?:Mån|Tis|Ons|Tors|Fre|Lör|Sön)\s+(\d+)/(\d+)')
     # Regex to detect time ranges, e.g. "10:00 - 11:00"
-    time_pattern = re.compile(r'^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})')
+    time_pattern = re.compile(r'^(\d{2}:\d{2})\s*-\s*\d{2}:\d{2}')
     
-    for page_num, page in enumerate(reader.pages):
+    for page in reader.pages:
         text = page.extract_text()
         lines = text.split('\n')
         
@@ -78,7 +73,6 @@ def parse_pdf_schedule(pdf_path):
             time_match = time_pattern.match(line)
             if time_match and current_date_str:
                 start_time_24 = time_match.group(1)
-                end_time_24 = time_match.group(2)
                 start_time_12 = parse_time_12h(start_time_24)
                 
                 # Gather all lines belonging to this event block until we hit the next time range, 

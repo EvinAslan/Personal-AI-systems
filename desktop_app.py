@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # 3. Create native desktop window
     print("Launching Desktop UI...")
     webview.create_window(
-        title="Evina's Calendar",
+        title="Evin's Calendar",
         url='http://127.0.0.1:5000', 
         width=1280, 
         height=820,

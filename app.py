@@ -11,7 +11,7 @@ app = Flask(__name__,
             template_folder="templates", 
             static_folder="static")
 
-# Ensure database is initialized and seeded with some basic data
+# Ensure the database and events table exist.
 database.init_db()
 
 @app.route("/service-worker.js")

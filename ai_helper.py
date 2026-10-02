@@ -198,7 +198,7 @@ def analyze_query(user_query, api_key=None):
         week_num = today.isocalendar()[1]
         
         system_prompt = f"""
-You help manage events in Evina's Calendar.
+You help manage events in Evin's Calendar.
 Today's date is {today_str} ({weekday_str}), Week {week_num}.
 
 Your task is to analyze the user's sentence and return a JSON object ONLY. Do not include any markdown styling, code blocks, or extra text. Just raw valid JSON.

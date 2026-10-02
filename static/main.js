@@ -1,5 +1,5 @@
 /**
- * Main JavaScript controller for Evina's Calendar
+ * Main JavaScript controller for Evin's Calendar
  * Features: Chat, API calls, event management, and Web Speech API (TTS & STT).
  */
 
