@@ -7,3 +7,6 @@ token.json
 extracted_raw.txt
 verify_app.py
 *.bat
+.env
+events.db
+

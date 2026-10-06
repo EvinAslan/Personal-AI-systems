@@ -67,7 +67,7 @@ def authenticate_google_calendar():
 def sync_events(max_results=10):
     """
     Fetches upcoming events from the user's primary Google Calendar 
-    and inserts them into the local SQLite database.
+    and inserts them into the database.
     """
     service = authenticate_google_calendar()
     if not service:
@@ -93,7 +93,7 @@ def sync_events(max_results=10):
             print("No upcoming events found on Google Calendar.")
             return
             
-        print(f"Found {len(events)} events. Importing into SQLite...")
+        print(f"Found {len(events)} events. Importing into the database...")
         
         # Ensure db exists
         database.init_db()
@@ -125,7 +125,7 @@ def sync_events(max_results=10):
             # (Simple title and date matching)
             conn = database.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM events WHERE title = ? AND event_date = ?", (title, date_str))
+            cursor.execute("SELECT id FROM events WHERE title = %s AND event_date = %s", (title, date_str))
             exists = cursor.fetchone()
             conn.close()
             

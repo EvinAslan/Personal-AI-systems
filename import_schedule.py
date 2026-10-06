@@ -6,11 +6,10 @@ Supports Swedish character decoding and normalizes split words from PDF layouts.
 
 import os
 import re
-import sqlite3
 import pypdf
 from datetime import datetime
 
-DB_FILE = "events.db"
+import database
 
 # List of courses we know are in this schedule
 COURSES = [
@@ -158,14 +157,15 @@ def parse_pdf_schedule(pdf_path):
     return events
 
 def import_to_db(events):
-    conn = sqlite3.connect(DB_FILE)
+    database.init_db()
+    conn = database.get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM events")
     
     count = 0
     for ev in events:
         cursor.execute(
-            "INSERT INTO events (title, event_date, event_time, description) VALUES (?, ?, ?, ?)",
+            "INSERT INTO events (title, event_date, event_time, description) VALUES (%s, %s, %s, %s)",
             (ev["title"], ev["event_date"], ev["event_time"], ev["description"])
         )
         count += 1
@@ -186,11 +186,10 @@ if __name__ == "__main__":
         print(f"Successfully parsed {len(parsed_events)} events from PDF.")
         
         imported = import_to_db(parsed_events)
-        print(f"Imported {imported} schedule events into '{DB_FILE}' database.")
+        print(f"Imported {imported} schedule events into the database.")
         
         # Verify first few
-        conn = sqlite3.connect(DB_FILE)
-        conn.row_factory = sqlite3.Row
+        conn = database.get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM events ORDER BY event_date ASC, event_time ASC LIMIT 5")
         rows = cursor.fetchall()

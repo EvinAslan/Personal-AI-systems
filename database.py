@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
-"""Store and retrieve calendar events in the local SQLite database."""
+"""Store and retrieve calendar events in the PostgreSQL database."""
 
-import sqlite3
 import os
 from datetime import datetime, timedelta
+
+import psycopg
+from psycopg.rows import dict_row
+from dotenv import load_dotenv
+
 from date_utils import parse_event_date
 
-DB_FILE = "events.db"
+load_dotenv()
 
 def get_connection():
-    """Returns a connection to the SQLite database."""
-    conn = sqlite3.connect(DB_FILE)
+    """Returns a connection to the PostgreSQL database given by DATABASE_URL."""
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is not set.")
     # Return rows as dictionaries instead of tuples for cleaner API usage
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg.connect(database_url, row_factory=dict_row)
 
 def init_db(force_recreate=False):
     """
     Initializes the database by creating the events table if it doesn't exist.
     If force_recreate is True, it drops the existing table and starts fresh.
     """
-    if force_recreate and os.path.exists(DB_FILE):
-        try:
-            os.remove(DB_FILE)
-        except PermissionError:
-            pass # DB might be locked/open, we'll try DROP TABLE in SQL
-            
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -34,7 +33,7 @@ def init_db(force_recreate=False):
         
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
             event_date TEXT NOT NULL,  -- Format: YYYY-MM-DD
             event_time TEXT NOT NULL,  -- Format: HH:MM AM/PM
@@ -55,13 +54,13 @@ def add_event(title, date_str, time_str, description=None):
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Use parameterized query (?) to protect against SQL Injection
+    # Use parameterized query (%s) to protect against SQL Injection
     cursor.execute(
-        "INSERT INTO events (title, event_date, event_time, description) VALUES (?, ?, ?, ?)",
+        "INSERT INTO events (title, event_date, event_time, description) VALUES (%s, %s, %s, %s) RETURNING id",
         (title, date_str, time_str, description)
     )
+    event_id = cursor.fetchone()["id"]
     conn.commit()
-    event_id = cursor.lastrowid
     conn.close()
     return event_id
 
@@ -74,13 +73,12 @@ def get_events_by_date(date_str):
     cursor = conn.cursor()
     
     cursor.execute(
-        "SELECT * FROM events WHERE event_date = ? ORDER BY event_time ASC",
+        "SELECT * FROM events WHERE event_date = %s ORDER BY event_time ASC",
         (date_str,)
     )
     rows = cursor.fetchall()
     conn.close()
     
-    # Convert sqlite3.Row objects to standard python dicts
     return [dict(row) for row in rows]
 
 def get_all_events():
@@ -96,9 +94,9 @@ def delete_event(event_id):
     """Deletes an event by its ID."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM events WHERE id = ?", (event_id,))
+    cursor.execute("DELETE FROM events WHERE id = %s", (event_id,))
+    changes = cursor.rowcount
     conn.commit()
-    changes = conn.total_changes
     conn.close()
     return changes > 0
 
