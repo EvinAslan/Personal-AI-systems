@@ -23,6 +23,10 @@ def index():
     """Serves the main assistant dashboard interface."""
     return render_template("index.html")
 
+@app.route("/health")
+def health():
+    return "ok", 200
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     """
