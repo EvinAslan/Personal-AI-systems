@@ -21,30 +21,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusIndicator = document.querySelector(".status-indicator");
     const statusText = document.querySelector(".status-text");
 
-    // Mobile Sidebar Drawer Toggle
+    // Chat panel: side column on desktop, full-screen overlay on mobile
     const menuToggleBtn = document.getElementById("menu-toggle-btn");
-    const closeSidebarBtn = document.getElementById("close-sidebar-btn");
-    const sidebar = document.getElementById("app-sidebar");
-    
-    if (menuToggleBtn && closeSidebarBtn && sidebar) {
-        menuToggleBtn.addEventListener("click", () => {
-            sidebar.classList.add("active");
-        });
-        
-        closeSidebarBtn.addEventListener("click", () => {
-            sidebar.classList.remove("active");
-        });
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener("click", (e) => {
-            if (sidebar.classList.contains("active") && 
-                !sidebar.contains(e.target) && 
-                !menuToggleBtn.contains(e.target)) {
-                sidebar.classList.remove("active");
+    const chatToggleBtn = document.getElementById("chat-toggle-btn");
+    const chatPanel = document.getElementById("main-chat-container");
+    const mobileMQ = window.matchMedia("(max-width: 768px)");
+
+    if (chatToggleBtn && chatPanel) {
+        if (localStorage.getItem("chatHidden") === "1") chatPanel.classList.add("hidden-panel");
+        chatToggleBtn.addEventListener("click", () => {
+            if (mobileMQ.matches) {
+                chatPanel.classList.add("chat-open");
+            } else {
+                const hidden = chatPanel.classList.toggle("hidden-panel");
+                localStorage.setItem("chatHidden", hidden ? "1" : "0");
             }
         });
+        if (menuToggleBtn) {
+            menuToggleBtn.title = "Back";
+            menuToggleBtn.addEventListener("click", () => chatPanel.classList.remove("chat-open"));
+        }
     }
-
     // State Variables
     let isTtsEnabled = true;
     let isRecording = false;
@@ -68,18 +65,12 @@ document.addEventListener("DOMContentLoaded", () => {
             toggleAddBtn.classList.add("active");
             toggleAddBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> <span>Stäng</span>';
             
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
             const dateInput = document.getElementById("event-date");
-            if (dateInput && !dateInput.value) {
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
-                dateInput.value = `${yyyy}-${mm}-${dd}`;
-            }
             const timeInput = document.getElementById("event-time");
-            if (timeInput && !timeInput.value) {
-                timeInput.value = "12:00";
-            }
+            if (dateInput) dateInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            if (timeInput) timeInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
             
             // Keep scroll position at very top so Rubrik is 100% visible
             quickAddWrapper.scrollTop = 0;
@@ -99,6 +90,64 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Custom time picker with a "Klar" button
+    const timeInputEl = document.getElementById("event-time");
+    const timePopup = document.getElementById("time-popup");
+    const hoursCol = document.getElementById("time-hours");
+    const minutesCol = document.getElementById("time-minutes");
+    const timeDoneBtn = document.getElementById("time-done-btn");
+
+    if (timeInputEl && timePopup && hoursCol && minutesCol && timeDoneBtn) {
+        const pad2 = (n) => String(n).padStart(2, "0");
+        const buildCol = (col, count, type) => {
+            for (let i = 0; i < count; i++) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "time-opt";
+                b.dataset.type = type;
+                b.dataset.value = pad2(i);
+                b.textContent = pad2(i);
+                col.appendChild(b);
+            }
+        };
+        buildCol(hoursCol, 24, "h");
+        buildCol(minutesCol, 60, "m");
+
+        const markSelected = (scroll) => {
+            const [h, m] = (timeInputEl.value || "12:00").split(":");
+            [[hoursCol, h], [minutesCol, m]].forEach(([col, val]) => {
+                col.querySelectorAll(".time-opt").forEach((o) => {
+                    const sel = o.dataset.value === val;
+                    o.classList.toggle("selected", sel);
+                    if (sel && scroll) col.scrollTop = o.offsetTop - col.clientHeight / 2 + o.offsetHeight / 2;
+                });
+            });
+        };
+
+        const closePopup = () => { timePopup.hidden = true; };
+        const openPopup = () => { timePopup.hidden = false; markSelected(true); };
+
+        timeInputEl.addEventListener("click", () => (timePopup.hidden ? openPopup() : closePopup()));
+
+        timePopup.addEventListener("click", (e) => {
+            const opt = e.target.closest(".time-opt");
+            if (!opt) return;
+            let [h, m] = (timeInputEl.value || "12:00").split(":");
+            if (opt.dataset.type === "h") h = opt.dataset.value; else m = opt.dataset.value;
+            timeInputEl.value = `${h}:${m}`;
+            markSelected(false);
+        });
+
+        timeDoneBtn.addEventListener("click", () => {
+            closePopup();
+            const descInput = document.getElementById("event-desc");
+            if (descInput) descInput.focus({ preventScroll: true });
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!timePopup.hidden && !timePopup.contains(e.target) && e.target !== timeInputEl) closePopup();
+        });
+    }
     if (toggleAddBtn && quickAddWrapper) {
         toggleAddBtn.addEventListener("click", () => {
             const isCurrentlyCollapsed = quickAddWrapper.classList.contains("collapsed");

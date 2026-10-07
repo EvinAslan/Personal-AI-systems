@@ -6,6 +6,7 @@ Supports Swedish character decoding and normalizes split words from PDF layouts.
 
 import os
 import re
+import argparse
 import pypdf
 from datetime import datetime
 
@@ -156,25 +157,40 @@ def parse_pdf_schedule(pdf_path):
             
     return events
 
-def import_to_db(events):
+def import_to_db(events, replace=False):
+    """Insert events not already present. Returns (added, skipped)."""
     database.init_db()
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM events")
+    if replace:
+        cursor.execute("DELETE FROM events")
     
-    count = 0
+    added = 0
+    skipped = 0
     for ev in events:
+        cursor.execute(
+            "SELECT 1 FROM events WHERE title = %s AND event_date = %s AND event_time = %s",
+            (ev["title"], ev["event_date"], ev["event_time"])
+        )
+        if cursor.fetchone():
+            skipped += 1
+            continue
         cursor.execute(
             "INSERT INTO events (title, event_date, event_time, description) VALUES (%s, %s, %s, %s)",
             (ev["title"], ev["event_date"], ev["event_time"], ev["description"])
         )
-        count += 1
+        added += 1
         
     conn.commit()
     conn.close()
-    return count
+    return added, skipped
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Import TimeEdit.pdf events.")
+    parser.add_argument("--replace", action="store_true",
+                        help="DELETE ALL existing events before importing")
+    args = parser.parse_args()
+
     print("=== TIMEEDIT PDF PARSER & IMPORTER ===")
     pdf_file = "TimeEdit.pdf"
     
@@ -185,8 +201,14 @@ if __name__ == "__main__":
         parsed_events = parse_pdf_schedule(pdf_path=pdf_file)
         print(f"Successfully parsed {len(parsed_events)} events from PDF.")
         
-        imported = import_to_db(parsed_events)
-        print(f"Imported {imported} schedule events into the database.")
+        if args.replace:
+            print("WARNING: --replace deletes ALL existing events before importing.")
+            if input("This will DELETE ALL events. Type YES to continue: ") != "YES":
+                print("Aborted. Nothing was changed.")
+                raise SystemExit(1)
+
+        added, skipped = import_to_db(parsed_events, replace=args.replace)
+        print(f"Added {added} events, skipped {skipped} already existing.")
         
         # Verify first few
         conn = database.get_connection()

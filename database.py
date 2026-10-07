@@ -118,10 +118,25 @@ def seed_sample_data():
     print("Database seeded with sample events.")
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Calendar database utility.")
+    parser.add_argument("--seed", action="store_true",
+                        help="DELETE ALL events and insert sample data")
+    args = parser.parse_args()
+
     print("=== CALENDAR DATABASE ===")
-    
-    # Initialize and seed data
-    seed_sample_data()
+
+    if args.seed:
+        print("WARNING: Seeding drops the events table and deletes ALL existing events.")
+        if input("This will DELETE ALL events. Type YES to continue: ") != "YES":
+            print("Aborted. Nothing was changed.")
+            raise SystemExit(1)
+        seed_sample_data()
+    else:
+        init_db()
+        print(f"Events in database: {len(get_all_events())}")
+        raise SystemExit(0)
     
     # Query all events
     print("\nAll Scheduled Events in Database:")
