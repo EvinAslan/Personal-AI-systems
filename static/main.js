@@ -57,6 +57,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggleAddBtn = document.getElementById("toggle-add-btn");
     const quickAddWrapper = document.getElementById("quick-add-wrapper");
 
+    // Show the date in the same YYYY-MM-DD format on every device
+    const dateNativeEl = document.getElementById("event-date");
+    const dateDisplayEl = document.getElementById("event-date-display");
+    function syncDateDisplay() {
+        if (dateNativeEl && dateDisplayEl) dateDisplayEl.value = dateNativeEl.value;
+    }
+    if (dateNativeEl) {
+        dateNativeEl.addEventListener("change", syncDateDisplay);
+        dateNativeEl.addEventListener("input", syncDateDisplay);
+        dateNativeEl.addEventListener("click", () => {
+            if (typeof dateNativeEl.showPicker === "function") {
+                try { dateNativeEl.showPicker(); } catch (e) { /* picker already open */ }
+            }
+        });
+    }
     function setQuickAddState(isOpen) {
         if (!quickAddWrapper || !toggleAddBtn) return;
         
@@ -70,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const dateInput = document.getElementById("event-date");
             const timeInput = document.getElementById("event-time");
             if (dateInput) dateInput.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            syncDateDisplay();
             if (timeInput) timeInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
             
             // Keep scroll position at very top so Rubrik is 100% visible

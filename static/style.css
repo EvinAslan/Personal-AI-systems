@@ -1188,3 +1188,34 @@ body {
 .chat-panel .chat-input-area {
     padding: 12px 14px;
 }
+
+.date-input-row {
+    position: relative;
+}
+
+.date-input-row .date-display {
+    width: 100%;
+    text-align: left;
+}
+
+.date-input-row .date-native {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.date-input-row .date-native::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.quick-form input[type="text"],
+.time-input-row input {
+    text-align: left;
+}

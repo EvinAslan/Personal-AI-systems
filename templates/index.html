@@ -17,7 +17,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Main Style Sheet with cache-busting -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=10">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=11">
 </head>
 <body>
     <div class="app-container">
@@ -73,7 +73,10 @@
                                 <label for="event-date" class="form-label">
                                     <i class="fa-regular fa-calendar"></i> Datum <span class="required-star">*</span>
                                 </label>
-                                <input type="date" id="event-date" required />
+                                <div class="date-input-row">
+                                    <input type="text" id="event-date-display" class="date-display" readonly tabindex="-1" aria-hidden="true" />
+                                    <input type="date" id="event-date" class="date-native" required />
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="event-time" class="form-label">
