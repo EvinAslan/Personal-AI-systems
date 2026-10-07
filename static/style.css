@@ -8,20 +8,20 @@ All colors live in :root. Change them there, not in the rules below.
 :root {
     --bg: #EEF2F4;            /* page background */
     --surface: #FFFFFF;       /* panels and cards */
-    --surface-soft: #F5F7F8;  /* inputs, assistant bubbles, hover */
-    --border: #DCE3E7;
+    --surface-soft: #82d3e9;  /* inputs, assistant bubbles, hover */
+    --border: black;
 
-    --text: #1B2A33;          /* main text */
-    --text-muted: #5F6F78;    /* secondary text, placeholders */
+    --text: black;          /* main text */
+    --text-muted: black;    /* secondary text, placeholders */
 
-    --accent: #0E7490;        /* buttons, week badge, links */
-    --accent-hover: #155E75;
-    --accent-soft: #E0F1F5;   /* light accent background */
+    --accent: rgb(251, 163, 213);        /* buttons, week badge, links */
+    --accent-hover: black;
+    --accent-soft: #82d3e9;   /* light accent background */
 
     --danger: #C62828;
-    --danger-soft: #FDECEC;
-    --success: #1B7A43;
-    --success-soft: #E6F4EC;
+    --danger-soft: white;
+    --success: green;
+    --success-soft: white;
 
     --radius-lg: 16px;        /* panels */
     --radius: 10px;           /* inputs, buttons, cards */
